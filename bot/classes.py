@@ -1,5 +1,5 @@
 from langchain.tools import BaseTool
-from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain_core.pydantic_v1 import BaseModel, Field, root_validator
 from langchain.callbacks.manager import (
     AsyncCallbackManagerForToolRun,
     CallbackManagerForToolRun,
@@ -8,6 +8,8 @@ import json
 import requests
 from functions import extract_id_from_jwt
 from typing import Optional
+from typing import Dict, Any
+from pydantic import ValidationError
 
 base_url = "http://localhost:5000/api"
 
@@ -21,6 +23,18 @@ class SendMoneyArguments(BaseModel):
         ...,
         description="This is the amount of money to send to a user.",
     )
+# https://github.com/langchain-ai/langchain/issues/13662
+
+    # @root_validator
+    # def validate_inputs(cls, values: Dict[int, Any]) -> Dict:
+    #     accountNumber = values.get("accountNumber")
+    #     amount = values.get("amount")
+    #     print(amount, "======", accountNumber)
+    #     # Add your validation logic here
+    #     if not isinstance(accountNumber, int) or not isinstance(amount, float):
+    #         err = {'error': 'Did not specify the account number or amount'}
+    #         return err
+    #     return values
 
 
 # get the user's info (balnace , id , name , email ) still returns pw (from backend)
@@ -97,6 +111,7 @@ class SendMoney(BaseTool):
                    "Content-Type": "application/json"}
         data = {"amount": amount, "accountNumber": receiver_id}
         response = requests.post(url, headers=headers, json=data)
+        print(response)
         return response.json()
 
     async def _arun(
