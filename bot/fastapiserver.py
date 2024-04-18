@@ -1,43 +1,74 @@
+from pydantic import BaseModel
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Header, Request
+from fastapi import FastAPI, HTTPException, Header, Response, Request
+from fastapi.middleware.cors import CORSMiddleware
 import httpx
 import jwt
 from chat import get_response
 app = FastAPI()
+# Allow requests from http://localhost:3000
+origins = [
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
 
 @app.post("/login")
-async def login(email: str, password: str):
+async def login(login_request: LoginRequest, response: Response):
+    email = login_request.email
+    password = login_request.password
     # Forward the login information to the Node.js server
     node_url = "http://localhost:5000/api/auth/login"
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(node_url, json={"email": email, "password": password})
-            if response.status_code == 200:
-                token = response.json().get("token")
+            response_from_node = await client.post(node_url, json={"email": email, "password": password})
+            if response_from_node.status_code == 200:
+                token = response_from_node.json().get("token")
+                print(token)
                 # Set the token in a cookie
-                response.set_cookie(key="token", value=token)
-                # Forward the response from the Node.js server to the client
-                return response.json()  # Return JSON-serializable response
+                response.set_cookie(key="auth_token", value=token)
+                return response_from_node.json()
+
             else:
-                raise HTTPException(status_code=500, detail="Node.js server error")
+                raise HTTPException(
+                    status_code=500, detail="Node.js server error")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@app.post("/cookie-test")
+def cookie(response: Response):
+    response.set_cookie(key="dali", value="mejdi")
+    return {"msg": "test cookie succ"}
+
+
 @app.post("/register")
-async def login(username:str, email: str, password: str):
+async def login(username: str, email: str, password: str):
     # Forward the login information to the Node.js server
     node_url = "http://localhost:5000/api/auth/register"
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(node_url, json={"username":username,"email": email, "password": password})
+            response = await client.post(node_url, json={"username": username, "email": email, "password": password})
             if response.status_code == 201:
                 # Forward the response from the Node.js server to the client
-                return response.json()  # Return JSON-serializable response
+                return response.json()
             else:
-                raise HTTPException(status_code=500, detail="Node.js server error")
+                raise HTTPException(
+                    status_code=500, detail="Node.js server error")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @app.post("/chat")
@@ -48,14 +79,15 @@ async def chat(request: Request, authorization: Optional[str] = Header(None)):
     # Get user input from the request body
     request_body = await request.json()
     msg = request_body.get("msg")
-  
+
     try:
         # Extract the JWT token from the 'authorization' header
         token = None
         if authorization and authorization.startswith("Bearer "):
             token = authorization.split(" ")[1]
 
-        response = get_response(msg, token)  # Pass the token to get_response function
+        # Pass the token to get_response function
+        response = get_response(msg, token)
         res = {"chat_response": response}
         return res
     except Exception as e:
@@ -79,7 +111,6 @@ async def chat(request: Request, authorization: Optional[str] = Header(None)):
 #                 raise HTTPException(status_code=500, detail="Node.js server error")
 #     except Exception as e:
 #         raise HTTPException(status_code=500, detail=str(e))
-    
 
 
 # @app.post("/sendmoney")
@@ -116,7 +147,6 @@ async def chat(request: Request, authorization: Optional[str] = Header(None)):
 #                 raise HTTPException(status_code=500, detail="Node.js server error")
 #     except Exception as e:
 #         raise HTTPException(status_code=500, detail=str(e))
-    
 
 
 # def decode_jwt(token):
@@ -127,7 +157,7 @@ async def chat(request: Request, authorization: Optional[str] = Header(None)):
 #         raise HTTPException(status_code=401, detail="Token expired")
 #     except jwt.InvalidTokenError:
 #         raise HTTPException(status_code=401, detail="Invalid token")
-    
+
 
 # @app.get("/user")
 # async def get_userinfo(jwt:str):
@@ -146,4 +176,3 @@ async def chat(request: Request, authorization: Optional[str] = Header(None)):
 #                 raise HTTPException(status_code=500, detail="Node.js server error")
 #     except Exception as e:
 #         raise HTTPException(status_code=500, detail=str(e))
-    
