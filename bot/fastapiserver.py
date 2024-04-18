@@ -4,8 +4,10 @@ from fastapi import FastAPI, HTTPException, Header, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 import jwt
+from constants import BANKING_API_URL
 from chat import get_response
 app = FastAPI()
+
 # Allow requests from http://localhost:3000
 origins = [
     "http://localhost:3000",
@@ -29,11 +31,11 @@ class LoginRequest(BaseModel):
 async def login(login_request: LoginRequest, response: Response):
     email = login_request.email
     password = login_request.password
-    # Forward the login information to the Node.js server
-    node_url = "http://localhost:5000/api/auth/login"
+    # Forward the login information to the banking server
+    url = f"{BANKING_API_URL}/auth/login"
     try:
         async with httpx.AsyncClient() as client:
-            response_from_node = await client.post(node_url, json={"email": email, "password": password})
+            response_from_node = await client.post(url, json={"email": email, "password": password})
             if response_from_node.status_code == 200:
                 token = response_from_node.json().get("token")
                 print(token)
@@ -48,19 +50,13 @@ async def login(login_request: LoginRequest, response: Response):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/cookie-test")
-def cookie(response: Response):
-    response.set_cookie(key="dali", value="mejdi")
-    return {"msg": "test cookie succ"}
-
-
 @app.post("/register")
 async def login(username: str, email: str, password: str):
     # Forward the login information to the Node.js server
-    node_url = "http://localhost:5000/api/auth/register"
+    url = f"{BANKING_API_URL}/api/auth/register"
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(node_url, json={"username": username, "email": email, "password": password})
+            response = await client.post(url, json={"username": username, "email": email, "password": password})
             if response.status_code == 201:
                 # Forward the response from the Node.js server to the client
                 return response.json()
@@ -93,6 +89,12 @@ async def chat(request: Request, authorization: Optional[str] = Header(None)):
     except Exception as e:
         print("Error:", e)
         return {"error": str(e)}
+
+
+# @app.post("/cookie-test")
+# def cookie(response: Response):
+#     response.set_cookie(key="dali", value="mejdi")
+#     return {"msg": "test cookie succ"}
 
 
 # @app.get("/balance")

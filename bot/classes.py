@@ -10,8 +10,7 @@ from functions import extract_id_from_jwt
 from typing import Optional
 from typing import Dict, Any
 from pydantic import ValidationError
-
-base_url = "http://localhost:5000/api"
+from constants import BANKING_API_URL
 
 
 class SendMoneyArguments(BaseModel):
@@ -46,12 +45,13 @@ class GetUserInfo(BaseTool):
 
         userId = extract_id_from_jwt(jwt)
 
-        balance_url = f"{base_url}/balance"
-        user_url = f"{base_url}/users/{userId}"
-        accountDetails_url = f"{base_url}/accounts"
+        balance_url = f"{BANKING_API_URL}/balance"
+        user_url = f"{BANKING_API_URL}/users/{userId}"
+        accountDetails_url = f"{BANKING_API_URL}/accounts"
 
         headers = {"Authorization": f"Bearer {jwt}",
                    "Content-Type": "application/json"}
+
         balance_info = requests.get(balance_url, headers=headers)
         user_info = requests.get(user_url, headers=headers)
         account_info = requests.get(accountDetails_url, headers=headers)
@@ -62,7 +62,7 @@ class GetUserInfo(BaseTool):
         account_data = account_info.json()
 
         # Merge the dictionaries
-        merged_data = {**balance_data, **user_data, **account_data}
+        merged_data = {**user_data, **account_data, **balance_data}
 
         return merged_data
 
@@ -80,7 +80,7 @@ class GetTransactionsHistory(BaseTool):
     description = "Tool to get the user's transaction history (JWT)"
 
     def _run(self,  jwt: str, query: str, run_manager: Optional[CallbackManagerForToolRun] = None) -> dict:
-        url = f"{base_url}/transactions/history"
+        url = f"{BANKING_API_URL}/transactions/history"
 
         headers = {"Authorization": f"Bearer {jwt}",
                    "Content-Type": "application/json"}
@@ -106,12 +106,12 @@ class SendMoney(BaseTool):
         self,  jwt: str, amount: float, receiver_id: int, run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> dict:
         """Synchronous method to send money."""
-        url = f"{base_url}/transactions/send"
+        url = f"{BANKING_API_URL}/transactions/send"
         headers = {"Authorization": f"Bearer {jwt}",
                    "Content-Type": "application/json"}
         data = {"amount": amount, "accountNumber": receiver_id}
         response = requests.post(url, headers=headers, json=data)
-      
+
         return response.json()
 
     async def _arun(
@@ -131,7 +131,7 @@ class PayBill(BaseTool):
         self, jwt: str, run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> dict:
         """Synchronous method to send money."""
-        url = f"{base_url}/transactions/pay"
+        url = f"{BANKING_API_URL}/transactions/pay"
         headers = {"Authorization": f"Bearer {jwt}",
                    "Content-Type": "application/json"}
 

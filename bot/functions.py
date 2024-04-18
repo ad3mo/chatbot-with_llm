@@ -61,7 +61,6 @@ def run_api_functions(llm, query, function_args, tools, token, SendMoneyArgument
         case _:
             toolRes = {'msg': 'no function was selected'}
 
-    
     return toolRes
 
 
@@ -72,7 +71,6 @@ def process_chat(llm, query, functions):
         # determines which function to execute
         [HumanMessage(content=query)], functions=functions)
 
-   
     return response
 
 
@@ -93,7 +91,7 @@ def llm_response(llm, function_args,  query, output, tools, token, SendMoneyArgu
         ],
         functions=functions,
     )
-   
+
     return second_response.content
 
 
@@ -102,5 +100,5 @@ def process_from_history(llm_chain, query, chat_history):
         "chat_history": chat_history,
         "input": query,
     })
-   
+
     return response["text"]
