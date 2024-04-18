@@ -9,10 +9,10 @@ from typing import Optional
 import json
 import requests
 import os
+import jwt
 from dotenv import load_dotenv
 load_dotenv()
 
-jswt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzEzMTAxMTIyLCJleHAiOjE3MTMxODc1MjJ9.6Q4v4qmf8Qnuc5KHF6zHYujSlrI90zEtBx3Vp1ULV7s"
 
 # loading the llm (require .env file containg OPENAI_API_KEY)
 llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo-0613")
@@ -42,34 +42,73 @@ prompt = ChatPromptTemplate.from_messages([
 
 llm_chain = LLMChain(prompt=prompt, llm=llm)
 
-chat_history = []
 
-while True:
-
-    query = input("You: ")
-
+def get_response(msg, jwt):
+    chat_history = []
+    query = msg
     output = process_chat(llm=llm, query=query, functions=functions)
 
     checkFunction = has_a_function_call(output)
     if checkFunction:
-        print("\n==================WITH A FUNCTION====================\n")
         details = get_function_details(checkFunction, output)
         name = details[0]
         args = json.loads(details[1])
-        print("\n==================NAME====================\n",
-              name, "\n======================================\n")
-        print("\n==================ARGS====================\n",
-              args, "\n======================================\n")
         response = llm_response(llm=llm, function_args=args, query=query,
-                                output=output, function_name=name, SendMoneyArguments=SendMoneyArguments, tools=tools, token=jswt, functions=functions)
+                                output=output, function_name=name, SendMoneyArguments=SendMoneyArguments, tools=tools, token=jwt, functions=functions)
     else:
-        print("\n================WITHOUT FUNCTIONS======================\n")
         response = process_from_history(llm_chain=llm_chain, query=query,
                                         chat_history=chat_history)
 
     chat_history.append(HumanMessage(content=query))
     chat_history.append(AIMessage(content=response))
 
-    print("Assistant: ", response)
-    print("=======================\n history: ",
-          chat_history, "\n=======================\n ")
+    return response
+
+
+if __name__ == "__main__":
+    jswt = ""
+
+    print("Let's chat! (type 'quit' to exit)")
+    while True:
+        # sentence = "do you use credit cards?"
+        sentence = input("You: ")
+        if sentence == "quit":
+            break
+
+        resp = get_response(sentence, jwt)
+        print(resp)
+
+
+# TODO: DEBUGGING
+
+# chat_history = []
+
+# while True:
+
+#     query = input("You: ")
+
+#     output = process_chat(llm=llm, query=query, functions=functions)
+
+#     checkFunction = has_a_function_call(output)
+#     if checkFunction:
+#         print("\n==================WITH A FUNCTION====================\n")
+#         details = get_function_details(checkFunction, output)
+#         name = details[0]
+#         args = json.loads(details[1])
+#         print("\n==================NAME====================\n",
+#               name, "\n======================================\n")
+#         print("\n==================ARGS====================\n",
+#               args, "\n======================================\n")
+#         response = llm_response(llm=llm, function_args=args, query=query,
+#                                 output=output, function_name=name, SendMoneyArguments=SendMoneyArguments, tools=tools, token=jswt, functions=functions)
+#     else:
+#         print("\n================WITHOUT FUNCTIONS======================\n")
+#         response = process_from_history(llm_chain=llm_chain, query=query,
+#                                         chat_history=chat_history)
+
+#     chat_history.append(HumanMessage(content=query))
+#     chat_history.append(AIMessage(content=response))
+
+#     print("Assistant: ", response)
+#     print("=======================\n history: ",
+#           chat_history, "\n=======================\n ")
