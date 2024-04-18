@@ -111,7 +111,7 @@ class SendMoney(BaseTool):
                    "Content-Type": "application/json"}
         data = {"amount": amount, "accountNumber": receiver_id}
         response = requests.post(url, headers=headers, json=data)
-        print(response)
+      
         return response.json()
 
     async def _arun(
