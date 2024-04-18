@@ -13,6 +13,9 @@ async def login(email: str, password: str):
         async with httpx.AsyncClient() as client:
             response = await client.post(node_url, json={"email": email, "password": password})
             if response.status_code == 200:
+                token = response.json().get("token")
+                # Set the token in a cookie
+                response.set_cookie(key="token", value=token)
                 # Forward the response from the Node.js server to the client
                 return response.json()  # Return JSON-serializable response
             else:
