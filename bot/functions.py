@@ -11,9 +11,9 @@ def extract_id_from_jwt(token):
         user_id = decoded_token.get('id')
         return user_id
     except jwt.ExpiredSignatureError:
-        print("Token has expired.")
+        return {"err": "Token has expired."}
     except jwt.InvalidTokenError:
-        print("Invalid token.")
+        return {"error": "Invalid token."}
 
 
 def has_a_function_call(msg):
@@ -52,6 +52,8 @@ def run_api_functions(llm, query, function_args, tools, token, SendMoneyArgument
                 amount = parse.get("text").amount
                 toolRes = tools[2]._run(
                     jwt=token, receiver_id=accountNumber, amount=amount)
+                if toolRes['message'] == "Transaction completed successfully":
+                    del toolRes['receiver']
             except:
                 toolRes = {
                     'error': 'Did not specify the account number or amount'}
@@ -60,7 +62,6 @@ def run_api_functions(llm, query, function_args, tools, token, SendMoneyArgument
             toolRes = tools[3]._run(jwt=token)
         case _:
             toolRes = {'msg': 'no function was selected'}
-
     return toolRes
 
 

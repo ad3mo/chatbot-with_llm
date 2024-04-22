@@ -66,7 +66,7 @@ def get_response(msg, jwt):
 
 
 if __name__ == "__main__":
-    jswt = ""
+    jwt = ""
 
     print("Let's chat! (type 'quit' to exit)")
     while True:
@@ -77,38 +77,3 @@ if __name__ == "__main__":
 
         resp = get_response(sentence, jwt)
         print(resp)
-
-
-# TODO: DEBUGGING
-
-# chat_history = []
-
-# while True:
-
-#     query = input("You: ")
-
-#     output = process_chat(llm=llm, query=query, functions=functions)
-
-#     checkFunction = has_a_function_call(output)
-#     if checkFunction:
-#         print("\n==================WITH A FUNCTION====================\n")
-#         details = get_function_details(checkFunction, output)
-#         name = details[0]
-#         args = json.loads(details[1])
-#         print("\n==================NAME====================\n",
-#               name, "\n======================================\n")
-#         print("\n==================ARGS====================\n",
-#               args, "\n======================================\n")
-#         response = llm_response(llm=llm, function_args=args, query=query,
-#                                 output=output, function_name=name, SendMoneyArguments=SendMoneyArguments, tools=tools, token=jswt, functions=functions)
-#     else:
-#         print("\n================WITHOUT FUNCTIONS======================\n")
-#         response = process_from_history(llm_chain=llm_chain, query=query,
-#                                         chat_history=chat_history)
-
-#     chat_history.append(HumanMessage(content=query))
-#     chat_history.append(AIMessage(content=response))
-
-#     print("Assistant: ", response)
-#     print("=======================\n history: ",
-#           chat_history, "\n=======================\n ")
