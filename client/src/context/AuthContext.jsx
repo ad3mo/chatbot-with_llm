@@ -1,5 +1,11 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
-import { checkAuthStatus, loginUser, signupUser, logoutUser } from "../api/api";
+import {
+  checkAuthStatus,
+  loginUser,
+  signupUser,
+  logoutUser,
+  // generate,
+} from "../api/api";
 
 //create new context
 const AuthContext = createContext();
@@ -44,6 +50,13 @@ export const AuthProvider = ({ children }) => {
     window.location.reload();
   };
 
+  // const chat = async (input) => {
+  //   const data = await generate(input);
+  //   if (data) {
+  //     console.log(data);
+  //   }
+  // };
+
   const value = {
     user,
     isLoggedIn,
@@ -55,7 +68,7 @@ export const AuthProvider = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// custom hook to consume the AuthContext
+// Custom hook to consume the AuthContext
 export const useAuth = () => {
   return useContext(AuthContext);
 };

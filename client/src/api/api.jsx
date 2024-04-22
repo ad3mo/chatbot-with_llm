@@ -39,13 +39,3 @@ export const logoutUser = async () => {
   const data = await res.data;
   return data;
 };
-
-export const generate = async () => {
-  const res = await axios.post("/generate");
-  if (!res.ok) {
-    throw new Error("Failed to generate response");
-  }
-
-  const responseData = await res.json();
-  console.log("Response from server:", responseData);
-};
